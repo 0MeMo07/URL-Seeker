@@ -12,7 +12,6 @@ URL Seeker is advanced docking tool that allows you to search for URLs associate
 - [Usage](#usage)
 - [Options](#options)
 - [Output](#output)
-- [Dependencies](#dependencies)
 - [Contributing](#contributing)
 - [License](#license)
 - [Disclaimer](#disclaimer)
@@ -71,15 +70,6 @@ After the scan, you can choose from the following output options:
 2. Save current unsorted URLs to a file.
 3. Print all unsorted URLs.
 4. Print all sorted URLs.
-
-## Dependencies
-
-- asyncio
-- requests
-- bs4
-- tqdm
-- aiohttp
-- pystyle
 
 ## Contributing
 
