@@ -1,0 +1,11 @@
+asyncio
+beautifulsoup4
+bs4
+certifi
+chardet
+idna
+pystyle
+requests
+tqdm
+urllib3
+aiohttp
