@@ -1,5 +1,5 @@
 # URL-Seeker
-URL Seeker is advanced docking tool that allows you to search for URLs associated with the target domain using various dors and search engine pages. Once found, SQL injection scanning will be added very soon.
+URL Seeker is advanced dorking tool that allows you to search for URLs associated with the target domain using various dorks and search engine pages. Once found, SQL injection scanning will be added very soon.
 
 ![image](https://github.com/0MeMo07/URL-Seeker/assets/103096364/6c887dd5-3af5-4e02-a939-24911324dec8)
 
