@@ -6,6 +6,7 @@ import sys
 import os
 import asyncio
 import requests
+import argparse
 from signal import SIGINT, signal
 import bs4, tqdm
 from glob import glob
@@ -18,6 +19,8 @@ from aiohttp import web
 from pystyle import Colors, Colorate
 from functools import wraps
 import urllib3
+from src import Sql_injection_seeker
+
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 proxy = False
@@ -25,7 +28,18 @@ R = '\033[31m'
 G = '\033[32m'
 W = '\033[0m'
 
-d0rk = [line.strip() for line in open("src/d0rks.txt", "r", encoding="utf-8")]
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='URL Seeker - Enhanced Dorking')
+    parser.add_argument('--sites', help='Target Domain Ex: .com, .org, .net')
+    parser.add_argument('--dorks', type=int, default=0, help='Number of dorks (0 for all)')
+    parser.add_argument('--threads', type=int, help='Number of threads')
+    parser.add_argument('--pages', type=int, help='Number of search engine pages to crawl per dork')
+    parser.add_argument('--rdork' ,help="'Y' if you want the dorks to be randomly selected, 'N' if not")
+    parser.add_argument('--S', help='URL or .txt file')
+    parser.add_argument('--O', action='store_true' ,help='for automatic sql injection scanning --O')
+    return parser.parse_args()
 
 def logo():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -39,23 +53,41 @@ def logo():
         ░░▒░ ░ ░   ░▒ ░ ▒░░ ░ ▒  ░   ░ ░▒  ░ ░ ░ ░  ░ ░ ░  ░░ ░▒ ▒░ ░ ░  ░  ░▒ ░ ▒░
         ░░░ ░ ░   ░░   ░   ░ ░      ░  ░  ░     ░      ░   ░ ░░ ░    ░     ░░   ░ 
         ░        ░         ░  ░         ░     ░  ░   ░  ░░  ░      ░  ░   ░              
-            https://github.com/0MeMo07/                     URL Seeker <  1.0.0  >                      
+            https://github.com/0MeMo07/                     URL Seeker <  2.0.0  >                      
                                                                Enhanced Dorking                                                                    
           """))
     
 def f_menu():
+    global args
+    args = parse_arguments()
     import time
     global proxy
     logo()
-    f_scan()
 
-def f_scan():
+    print(R +f"[1]{W} Dork Search")
+    print(R +f"[2]{W} SQL injection scanning\n")
+    select = input(R + "> " + W)
+
+    if select == "1":
+        f_scan(args)
+    if select == "2":
+        input_value = input("\nEnter a URL or txt file to scan: ")
+
+        if input_value.lower().endswith('.txt'):
+            with open(input_value, 'r', encoding='iso-8859-9') as file:
+                for line in file:
+                    url = line.strip()
+                    seeker_instance = Sql_injection_seeker.Seeker(base_url=url)
+                    seeker_instance.seek_injections()
+        else:
+            seeker_instance = Sql_injection_seeker.Seeker(base_url=input_value)
+            seeker_instance.seek_injections()
+
+def f_scan(args):
     import time
 
     global pages_pulled_as_one
     global usearch
-    global numthreads
-    global threads
     global finallist
     global unsorted
     global finallist2
@@ -65,6 +97,7 @@ def f_scan():
     global loaded_Dorks
     global unsorted
     global sites
+
     threads = []
     finallist = []
     finallist2 = []
@@ -72,44 +105,67 @@ def f_scan():
     col = []
     darkurl = []
     loaded_Dorks = []
-    print(W)
-    sites = input(
-        "\nTarget Domain Ex: .com, .org, .net : "
-    )
-    sitearray = list(map(str, sites.split(",")))
-    dorks = input(
-        "Randomly select the number of dorks (0 for all of them... may take some time!) : "
-    )
-    if int(dorks) == 0:
-        i = 0
-        while i < len(d0rk):
-            loaded_Dorks.append(d0rk[i])
-            i += 1
+
+    if args.S:
+        input_value = args.S
+
+        if input_value.lower().endswith('.txt'):
+            with open(input_value, 'r', encoding='iso-8859-9') as file:
+                for line in file:
+                    url = line.strip()
+                    seeker_instance = Sql_injection_seeker.Seeker(base_url=url)
+                    seeker_instance.seek_injections()
+        else:
+            seeker_instance = Sql_injection_seeker.Seeker(base_url=input_value)
+            seeker_instance.seek_injections()
     else:
-        i = 0
-        while i < int(dorks):
-            loaded_Dorks.append(d0rk[i])
-            i += 1
-    numthreads = input("Enter the number of threads - 50-500 : ")
-    pages_pulled_as_one = input(
-        "Enter the number of Search Engine Pages to crawl per D0rk, between 25 and 100 @ 25 increments : "
-    )
-    print(R + "==============================")
-    print(W + f"Threads         :{G}", numthreads)
-    print(W + f"Dorks           :{G}", len(loaded_Dorks))
-    print(W + f"Pages           :{G}", pages_pulled_as_one)
-    print(R + "==============================")
-    time.sleep(5)
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    usearch = loop.run_until_complete(search(pages_pulled_as_one))
+        sites = args.sites or input("\nTarget Domain Ex: .com, .org, .net : ")
+
+        sitearray = list(map(str, sites.split(",")))
+
+        dorks = args.dorks or input("Randomly select the number of dorks (0 for all of them... may take some time!) : ")
+        
+        random_dorks = args.rdork or input("'Y' if you want the dorks to be randomly selected, 'N' if not : ")
+
+        d0rk = [line.strip() for line in open("src/d0rks.txt", "r", encoding="utf-8")]
+
+        if int(dorks) == 0:
+            if random_dorks == 'Y' or random_dorks == 'y':
+                loaded_Dorks = random.sample(d0rk)
+            else:
+                loaded_Dorks = d0rk
+        else:
+            if random_dorks == 'Y' or random_dorks == 'y':
+                loaded_Dorks = random.sample(d0rk, int(dorks))
+            else:
+                loaded_Dorks = d0rk[:int(dorks)]
 
 
 
-async def search(pages_pulled_as_one):
+        numthreads = args.threads or input("Enter the number of threads - 50-500 : ")
+
+        pages_pulled_as_one = args.pages or input("Enter the number of Search Engine Pages to crawl per D0rk, between 25 and 100 @ 25 increments : ")
+
+        print(R + "==============================")
+        print(W + f"Sites           :{G}", sites)
+        print(W + f"Threads         :{G}", numthreads)
+        print(W + f"Dorks           :{G}", len(loaded_Dorks))
+        print(W + f"Pages           :{G}", pages_pulled_as_one)
+        print(W + f"Random Dork     :{G}", random_dorks)
+        print(R + "==============================")
+        time.sleep(5)
+
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        usearch = loop.run_until_complete(search(pages_pulled_as_one, numthreads, loaded_Dorks, sitearray))
+
+
+
+
+async def search(pages_pulled_as_one, numthreads, loaded_Dorks, sitearray):
     random.shuffle(loaded_Dorks)
     urls = []
     urls_len_last = 0
@@ -210,8 +266,8 @@ async def search(pages_pulled_as_one):
             print(R + f"[2] {W}Save current UNSORTED URLs to file")
             print(R + f"[3] {W}Print all the UNSORTED URLs ")
             print(R + f"[4] {W}Print all SORTED URLs")
-            print(R + f"[5] {W}SQL injection scanning SORTED URLs (Coming Soon)")
-            print(R + f"[6] {W}SQL injection scanning UNSORTED URLs (Coming Soon)\n")
+            print(R + f"[5] {W}SQL injection scanning SORTED URLs")
+            print(R + f"[6] {W}SQL injection scanning UNSORTED URLs\n")
             sec = input(R + "> ")
             if sec == "1":
                 print(G + "\nSaving sorted URLs (" + str(len(finallist)) + ") to file\n")
@@ -253,14 +309,36 @@ async def search(pages_pulled_as_one):
                 output()
             elif sec == "5":
                 logo()
+                from src import Sql_injection_seeker
+                finallist.sort()
+                for url in finallist:
+                    seeker_instance = Sql_injection_seeker.Seeker(base_url=url)
+                    seeker_instance.seek_injections()
                 output()
             elif sec == "6":
                 logo()
+                from src import Sql_injection_seeker
+                unsorted.sort()
+                for url in unsorted:
+                    seeker_instance = Sql_injection_seeker.Seeker(base_url=url)
+                    seeker_instance.seek_injections()
                 output()
              
         except KeyboardInterrupt:
             os.system('cls' if os.name == 'nt' else 'clear')
-    output()
+
+    if args.O:
+        print(f"\n\n{R}[+] {W}URLS (unsorted): {G}", len(urls))
+        print(f"{R}[+] {W}URLS (sorted) with rubbish removed: {G}", len(finallist))
+        print("")
+        from src import Sql_injection_seeker
+        finallist.sort()
+        for url in finallist:
+            seeker_instance = Sql_injection_seeker.Seeker(base_url=url)
+            seeker_instance.seek_injections()
+        output()
+    else: 
+        output()
     return finallist
 
 def ignoring_get(url):
