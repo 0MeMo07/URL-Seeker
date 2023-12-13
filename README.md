@@ -2,7 +2,7 @@
 
 URL Seeker is an advanced dorking tool that allows you to search for URLs associated with the target domain using various dorks and search engine pages. SQL injection scanning will be added very soon.
 
-![URL Seeker](https://github.com/0MeMo07/URL-Seeker/assets/103096364/6c887dd5-3af5-4e02-a939-24911324dec8)
+![Url_SeekerB](https://github.com/0MeMo07/URL-Seeker/assets/103096364/51af6ded-e410-4d50-9b57-89bc6551eb7e)
 
 ## Table of Contents
 
